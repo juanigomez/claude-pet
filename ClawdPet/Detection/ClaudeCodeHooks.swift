@@ -32,6 +32,11 @@ enum ClaudeCodeHooks {
     ///   ejemplo cuando queda esperando input un rato largo).
     /// - **`PostToolUse` corre justo después de que aprobás** y la herramienta termina:
     ///   ese es el que saca a la mascota del salto.
+    /// - **`Stop` también manda `needs_action`**: cuando Claude termina de responder
+    ///   queremos que la mascota vaya hasta la app igual que cuando pide permiso, no
+    ///   que directamente vuelva a pasearse en `idle` sin avisar. Se saca del salto
+    ///   igual que cualquier otro `needs_action`: clickeando la mascota o volviendo
+    ///   vos mismo a esa app (ver `observeAppSwitches` en `PetController`).
     static let mapping: [(event: String, command: String)] = [
         ("UserPromptSubmit", "clawdpet-hook thinking"),
         // Sin mensaje literal: el hook reenvía el JSON de Claude Code y la burbuja
@@ -39,7 +44,7 @@ enum ClaudeCodeHooks {
         ("PermissionRequest", "clawdpet-hook needs_action"),
         ("Notification", "clawdpet-hook needs_action"),
         ("PostToolUse", "clawdpet-hook thinking"),
-        ("Stop", "clawdpet-hook idle")
+        ("Stop", "clawdpet-hook needs_action")
     ]
 
     struct Report {

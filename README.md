@@ -129,7 +129,7 @@ Los hooks que enchufa:
 | `PermissionRequest` | `clawdpet-hook needs_action 'Necesito tu OK'` | salta pidiendo atención |
 | `Notification` | `clawdpet-hook needs_action 'Necesito tu OK'` | otros avisos |
 | `PostToolUse` | `clawdpet-hook thinking` | respondiste, sigue trabajando |
-| `Stop` | `clawdpet-hook idle` | vuelve a caminar |
+| `Stop` | `clawdpet-hook needs_action` | terminó de responder, va hasta la app y espera tu click |
 
 Abrí una sesión nueva de Claude Code para que los tome.
 
@@ -151,6 +151,10 @@ UserPromptSubmit → PreToolUse → [aparece el prompt] → PermissionRequest
   llega más tarde; lo dejamos igual porque cubre otros casos.
 - **`PostToolUse` corre justo después de que respondés** y la herramienta termina: ese
   es el que saca a la mascota del salto.
+- **`Stop` también manda `needs_action`**: cuando Claude termina de responder la
+  mascota va hasta la app igual que cuando pide permiso, en vez de volver directamente
+  a pasearse sin avisar. Se saca del salto igual que cualquier otro `needs_action`:
+  clickeándola o volviendo vos mismo a esa app.
 
 ### `@Published` publica en `willSet`
 
