@@ -29,6 +29,10 @@ private extension View {
 /// pegada al borde inferior, con la mascota moviéndose adentro.
 struct PetRootView: View {
     @ObservedObject var controller: PetController
+    /// Alto real de lo que hay sobre la cabeza (burbuja o campo de texto), para que la
+    /// ventana-franja reserve suficiente lugar y una respuesta larga no quede cortada
+    /// contra el borde de la ventana ni termine tapando a la mascota.
+    var onOverheadHeightChange: (CGFloat) -> Void
     /// Rect en coordenadas SwiftUI de la ventana (origen arriba-izquierda).
     var onHitRectChange: (CGRect) -> Void
 
@@ -116,8 +120,14 @@ struct PetRootView: View {
         .background {
             GeometryReader { proxy in
                 Color.clear
-                    .onAppear { overheadWidth = proxy.size.width }
-                    .onChange(of: proxy.size.width) { _, new in overheadWidth = new }
+                    .onAppear {
+                        overheadWidth = proxy.size.width
+                        onOverheadHeightChange(proxy.size.height)
+                    }
+                    .onChange(of: proxy.size) { _, new in
+                        overheadWidth = new.width
+                        onOverheadHeightChange(new.height)
+                    }
             }
         }
         .offset(x: overheadShift)

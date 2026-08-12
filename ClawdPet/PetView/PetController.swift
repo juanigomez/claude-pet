@@ -414,13 +414,31 @@ final class PetController: ObservableObject {
     private var idleBounds: ClosedRange<Double> {
         let full = screenBounds
         guard config.stayOnDock, let dock = DockLocator.iconStripFrame() else { return full }
-        // Medio sprite: así el cuerpo entero queda sobre los íconos y no se asoma
-        // por la curva del borde del Dock.
-        let inset = layout.spriteSide * 0.5
+        let inset = dockEdgeInset
         let lo = max(full.lowerBound, dock.minX - layoutOriginX + inset)
         let hi = min(full.upperBound, dock.maxX - layoutOriginX - inset)
         guard hi - lo > layout.spriteSide else { return full }
         return lo...hi
+    }
+
+    /// Medio centímetro en puntos, según el tamaño físico real de la pantalla.
+    ///
+    /// Un margen basado en múltiplos de `spriteSide` se dispara cuando el usuario
+    /// sube la escala del sprite: llega a superar el ancho del Dock, dispara el
+    /// fallback de "usar toda la pantalla" de arriba, y la mascota vuelve a
+    /// pasearse hasta la curvatura real del Dock (justo lo que este margen
+    /// intenta evitar). Un valor físico fijo no tiene ese problema.
+    private var dockEdgeInset: Double {
+        let cm = 0.5
+        let fallback = cm * 38.0 // ~96dpi, por si no hay pantalla o falla la medición.
+        guard let screen = NSScreen.screens.first else { return fallback }
+        guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
+        else { return fallback }
+        let displayID = CGDirectDisplayID(screenNumber.uint32Value)
+        let sizeMM = CGDisplayScreenSize(displayID)
+        guard sizeMM.width > 0 else { return fallback }
+        let pointsPerMM = screen.frame.width / Double(sizeMM.width)
+        return cm * 10.0 * pointsPerMM
     }
 
     private func pickNewIdleTarget() {

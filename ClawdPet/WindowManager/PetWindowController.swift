@@ -27,6 +27,12 @@ final class PetWindowController {
     /// Margen extra alrededor de la mascota para que sea fácil de clickear.
     private let hitPadding: CGFloat = 6
 
+    /// Alto real medido de la burbuja/campo de texto sobre la cabeza. Cuando una
+    /// respuesta larga necesita más lugar que la reserva por defecto, agrandamos la
+    /// franja en vez de dejar que se corte contra el borde de la ventana o tape a la
+    /// mascota.
+    private var overheadHeight: CGFloat = 0
+
     init(controller: PetController, store: ConfigStore) {
         self.controller = controller
         self.store = store
@@ -85,7 +91,10 @@ final class PetWindowController {
 
     private func buildPanel() {
         let panel = PetPanel(contentRect: NSRect(x: 0, y: 0, width: 800, height: 200))
-        let root = PetRootView(controller: controller) { [weak self] rect in
+        let root = PetRootView(controller: controller,
+                               onOverheadHeightChange: { [weak self] height in
+            self?.updateOverheadHeight(height)
+        }) { [weak self] rect in
             self?.updateHitRect(rect)
         }
         let hosting = NSHostingView(rootView: root)
@@ -118,8 +127,14 @@ final class PetWindowController {
         // Con `floorY`, `stripHeight` y `spriteSide` enteros, la posición final del
         // sprite en pantalla cae siempre en un punto entero.
         let floorY = max(0, (dockHeight + store.config.verticalOffset).rounded())
-        // Reservamos lugar arriba para la burbuja.
-        let stripHeight = (floorY + spriteSide + spriteSide * 1.8 + 16).rounded(.up)
+        // Reservamos lugar arriba para la burbuja: por defecto una estimación en base a
+        // la escala, pero si lo que mide la vista (una respuesta larga de 4 líneas) es
+        // más alto, usamos eso. Sin este máximo, una respuesta larga terminaba cortada
+        // contra el borde de la ventana o tapando a la mascota.
+        let headGap = max(6, scale * 1.6)
+        let estimatedOverhead = spriteSide * 1.8 + 16
+        let measuredOverhead = overheadHeight > 0 ? Double(overheadHeight) + headGap + 4 : 0
+        let stripHeight = (floorY + spriteSide + max(estimatedOverhead, measuredOverhead)).rounded(.up)
 
         let newFrame = NSRect(x: screenFrame.minX,
                               y: screenFrame.minY,
@@ -140,6 +155,13 @@ final class PetWindowController {
             controller.layout = layout
         }
         controller.layoutOriginX = Double(screenFrame.minX)
+    }
+
+    /// Se llama cada vez que la vista mide el alto real de la burbuja/campo de texto.
+    private func updateOverheadHeight(_ height: CGFloat) {
+        guard abs(overheadHeight - height) > 0.5 else { return }
+        overheadHeight = height
+        updateGeometry()
     }
 
     // MARK: - `ignoresMouseEvents` dinámico
