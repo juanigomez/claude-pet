@@ -47,27 +47,24 @@ struct PetRootView: View {
                 - side / 2
                 + CGFloat(controller.frame.bounceY)
 
-            // El sprite espejado (mirar para la izquierda) va en un ZStack, no en
-            // `.overlay()`: con `.overlay(alignment:)` sobre una vista con
-            // `.scaleEffect(x: -1)`, SwiftUI resuelve el `alignmentGuide` de la
-            // burbuja como si el volteo también corriera su eje vertical, y la
-            // burbuja terminaba pegada a la cabeza sólo cuando la mascota miraba
-            // para la izquierda. El `ZStack` no tiene ese acoplamiento: cada hijo
-            // se transforma por separado antes de alinearse.
-            ZStack(alignment: .top) {
-                ClawdSpriteView(scale: scale,
-                                walkFrame: controller.frame.walkFrame,
-                                blinking: controller.frame.blinking,
-                                tint: tint)
-                    .scaleEffect(x: controller.frame.facing.scaleX, y: 1, anchor: .center)
-                overhead
-            }
-            .contentShape(Rectangle())
-            .reportsHitRect()
-            // Redondeamos a punto entero: el pixel-art se ve sucio si cae en
-            // coordenadas fraccionarias (bordes antialiaseados entre colores).
-            .position(x: CGFloat(controller.frame.x).rounded(), y: centerY.rounded())
-            .onTapGesture { controller.handleClick() }
+            // El espejado para mirar a la izquierda se hace ADENTRO de `ClawdSpriteView`
+            // (ver PixelSprite.swift), no con `.scaleEffect()` acá: un `scaleEffect` en
+            // un ancestro de la burbuja confundía a SwiftUI al resolver su
+            // `alignmentGuide`, y la dejaba pegada a la cabeza. Sin transformación en
+            // esta vista, el `.overlay()` de siempre alcanza — reporta el tamaño del
+            // sprite sin importar qué haya en la burbuja.
+            ClawdSpriteView(scale: scale,
+                            walkFrame: controller.frame.walkFrame,
+                            blinking: controller.frame.blinking,
+                            tint: tint,
+                            facing: controller.frame.facing)
+                .overlay(alignment: .top) { overhead }
+                .contentShape(Rectangle())
+                .reportsHitRect()
+                // Redondeamos a punto entero: el pixel-art se ve sucio si cae en
+                // coordenadas fraccionarias (bordes antialiaseados entre colores).
+                .position(x: CGFloat(controller.frame.x).rounded(), y: centerY.rounded())
+                .onTapGesture { controller.handleClick() }
         }
         .coordinateSpace(name: "petStrip")
         .onPreferenceChange(HitRectKey.self) { rect in
@@ -81,13 +78,16 @@ struct PetRootView: View {
     @ViewBuilder
     private var overhead: some View {
         if controller.state == .thinking {
+            // `.overlay(alignment: .top)` pega el borde SUPERIOR de la burbuja contra
+            // la cabeza por default; el offset la sube su propio alto más `headGap`,
+            // así el borde INFERIOR (la colita) queda esa separación por encima.
+            // (Antes esto usaba un `alignmentGuide` con `d[.bottom] + headGap`, que en
+            // los hechos no se aplicaba — cambiar el gap no movía nada. El offset con
+            // el alto calculado a mano es explícito y no depende de esa resolución.)
             SpeechBubbleView(time: controller.frame.time, scale: scale, tint: tint)
                 .fixedSize()
                 .reportsHitRect()
-                // Redefinimos la guía `.top` de la burbuja para que su borde inferior
-                // quede `headGap` por encima de la cabeza. Sin esto se superpone
-                // con el sprite.
-                .alignmentGuide(VerticalAlignment.top) { d in d[.bottom] + headGap }
+                .offset(y: -(SpeechBubbleView.totalHeight(scale: scale) + headGap))
         }
     }
 }

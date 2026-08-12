@@ -92,11 +92,19 @@ enum ClawdSprite {
 }
 
 /// Dibuja a Claw'd con `Canvas` + rectángulos sólidos (nada de interpolación ni bitmaps).
+///
+/// El espejado para mirar a la izquierda se hace ACÁ, corriendo cada rect a su columna
+/// simétrica dentro de la grilla, en vez de con `.scaleEffect(x: -1)` en la vista: un
+/// `scaleEffect` en un ancestro de la burbuja (ver `PetRootView`) confundía a SwiftUI al
+/// resolver su `alignmentGuide`, y la dejaba pegada a la cabeza. Espejando el dibujo
+/// adentro del `Canvas`, la vista nunca lleva una transformación — no hay nada que
+/// pueda interferir con la burbuja.
 struct ClawdSpriteView: View {
     var scale: CGFloat
     var walkFrame: Int
     var blinking: Bool
     var tint: ClawdTint
+    var facing: Facing = .right
 
     private var side: CGFloat { CGFloat(ClawdSprite.gridSize) * scale }
 
@@ -105,9 +113,12 @@ struct ClawdSpriteView: View {
             let s = scale
             let frame = min(max(walkFrame, 0), ClawdSprite.walkFrames.count - 1)
             let bob = ClawdSprite.walkBob[frame]
+            let gridSize = ClawdSprite.gridSize
+            let mirrored = facing == .left
 
             func fill(_ col: Int, _ row: Int, _ w: Int, _ h: Int, _ color: Color) {
-                let rect = CGRect(x: CGFloat(col) * s,
+                let x = mirrored ? gridSize - col - w : col
+                let rect = CGRect(x: CGFloat(x) * s,
                                   y: CGFloat(row) * s,
                                   width: CGFloat(w) * s,
                                   height: CGFloat(h) * s)

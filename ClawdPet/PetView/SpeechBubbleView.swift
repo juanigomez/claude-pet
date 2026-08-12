@@ -118,6 +118,17 @@ struct SpeechBubbleView: View {
     private var corner: CGFloat { max(6, scale * 2.0) }
     private var padH: CGFloat { max(7, scale * 1.9) }
     private var padV: CGFloat { max(5, scale * 1.4) }
+    private var dotSize: CGFloat { max(4, scale * 1.15) }
+
+    /// Alto total (puntitos + relleno + colita), para poder ubicarla a mano con un
+    /// `.offset()` en vez de un `alignmentGuide` — ver `PetRootView`.
+    static func totalHeight(scale: CGFloat) -> CGFloat {
+        let dotSize = max(4, scale * 1.15)
+        let dotsHeight = dotSize + dotSize * 0.5
+        let padV = max(5, scale * 1.4)
+        let tailHeight = max(5, scale * 1.1)
+        return dotsHeight + padV * 2 + tailHeight
+    }
 
     var body: some View {
         ThinkingDotsView(time: time, dotSize: max(4, scale * 1.15), color: tint.bubbleText)
