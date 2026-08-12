@@ -15,12 +15,20 @@ struct BubbleShape: Shape {
     var corner: CGFloat
     var tailWidth: CGFloat
     var tailHeight: CGFloat
+    /// Corrimiento horizontal de la colita respecto del centro del globo.
+    ///
+    /// Cuando la mascota camina cerca de un borde, el globo se desliza hacia adentro
+    /// para no salirse de la pantalla; la colita se corre en sentido contrario para
+    /// seguir apuntándole a la cabeza.
+    var tailOffset: CGFloat = 0
 
     func path(in rect: CGRect) -> Path {
         let bottom = rect.maxY - tailHeight              // borde inferior del globo
         let radius = min(corner, min(rect.width, bottom - rect.minY) / 2)
-        let cx = rect.midX
         let half = min(tailWidth, rect.width - radius * 2) / 2
+        // La colita no puede meterse en las esquinas redondeadas.
+        let limit = max(0, rect.width / 2 - radius - half)
+        let cx = rect.midX + min(max(tailOffset, -limit), limit)
 
         var path = Path()
         path.move(to: CGPoint(x: rect.minX + radius, y: rect.minY))
@@ -105,6 +113,8 @@ struct SpeechBubbleView: View {
     var time: Double
     var scale: CGFloat
     var tint: ClawdTint
+    /// Ver `BubbleShape.tailOffset`.
+    var tailOffset: CGFloat = 0
 
     /// Medidas derivadas de la escala del sprite, para que la burbuja acompañe
     /// el tamaño de la mascota sin taparla.
@@ -165,7 +175,8 @@ struct SpeechBubbleView: View {
         .background {
             let shape = BubbleShape(corner: corner,
                                     tailWidth: tailWidth,
-                                    tailHeight: tailHeight)
+                                    tailHeight: tailHeight,
+                                    tailOffset: tailOffset)
             shape
                 .fill(tint.bubbleFill)
                 .overlay { shape.stroke(tint.bubbleStroke, lineWidth: 1) }

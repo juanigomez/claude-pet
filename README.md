@@ -70,6 +70,48 @@ Sin Xcode:
 > Documents, el file provider le pega `com.apple.FinderInfo` al bundle y `codesign`
 > falla con *"resource fork … not allowed"*.
 
+## Con qué funciona
+
+| Dónde usás Claude | Cómo se entera la mascota | Estado |
+|---|---|---|
+| **Claude Code en VS Code / Cursor** | hooks | ✅ verificado |
+| **Claude Code en Terminal / iTerm / Ghostty / Warp** | hooks | ✅ verificado |
+| **claude.ai en el navegador** | userscript (`Scripts/clawdpet-claude-ai.user.js`) | ⚠️ ver abajo |
+| **Claude Desktop** | — | ❌ no hay señal |
+
+La diferencia no es capricho: **Claude Code tiene hooks**, que son una API de verdad
+para avisar qué está pasando. Las otras dos no tienen nada equivalente.
+
+### El navegador
+
+`Scripts/clawdpet-claude-ai.user.js`, para Tampermonkey o Violentmonkey. Mira el DOM de
+claude.ai y avisa cuando aparece o desaparece el botón de detener.
+
+Va por `GET` con todo en el query string, a propósito: en modo `no-cors` sólo se pueden
+mandar Content-Types simples, así que un `POST` con `application/json` dispararía
+preflight y quedaría bloqueado. Mixed content no molesta porque `127.0.0.1` cuenta como
+origen seguro. Y no manda `app`: sin PID ni identificador, Claw'd Pet usa la app que
+está al frente — o sea el navegador — así que anda igual en Chrome, Safari o Arc.
+
+Lo verificado es el mecanismo (el aviso llega y la mascota camina hasta el ícono del
+navegador). Lo que **no** está verificado son los selectores del DOM de claude.ai: si
+cambian, dejá de detectar. Para eso el script trae `__clawdpet.debug()` en la consola,
+que lista lo que encuentra.
+
+### Claude Desktop
+
+No hay forma confiable, y conviene decirlo derecho en vez de improvisar algo frágil:
+
+- **No tiene hooks.**
+- **No expone su interfaz por Accessibility.** Su ventana entera es
+  `AXWindow → AXGroup → tres AXButton sin título`. Nada de texto, nada de estado.
+- **Sus logs no sirven.** `~/Library/Logs/Claude/claude.ai-web.log` sólo tiene warnings
+  de la interfaz; no registra cuándo empieza ni termina un mensaje.
+
+Lo que sí funciona con Claude Desktop es lo inverso: la mascota puede **señalarla** (es
+una app como cualquier otra) y el campo de texto puede **escribirle**
+(Preferencias ▸ General ▸ Qué hace con tu pregunta).
+
 ## Conectarla con Claude Code
 
 **Preferencias ▸ Integración ▸ Conectar ahora.** Eso hace tres cosas:
@@ -422,7 +464,17 @@ lo que la registra en la lista.
 ```bash
 clawdpet ping        # servidor, permiso, tira del Dock y qué está haciendo la mascota
 curl -s http://127.0.0.1:8787/dock-debug   # ítems del Dock con identifier y posición
+curl -s "http://127.0.0.1:8787/ax-debug?app=com.anthropic.claudefordesktop"
 ```
+
+`ax-debug` vuelca el árbol de Accesibilidad de una app: sirve para averiguar si expone
+alguna señal con la que engancharse. Ojo que eso incluye texto de la interfaz de esa
+app, servido por HTTP local — es una herramienta de diagnóstico, no algo que quieras
+dejando corriendo si te importa ese detalle.
+
+> Corré la app con `open`, no invocando el binario directo. Al lanzarla desde una shell,
+> macOS le atribuye los permisos al **proceso responsable** (la terminal que la lanzó) en
+> vez de a la app, y `AXIsProcessTrusted()` devuelve `false` aunque el permiso esté dado.
 
 `ping` imprime algo así, que es lo que uso para diagnosticar sin adivinar por
 screenshots:

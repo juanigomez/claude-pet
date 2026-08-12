@@ -174,6 +174,11 @@ final class NotifyServer {
 
     private func route(_ request: HTTPRequest, on connection: NWConnection) {
         switch (request.method, request.path) {
+        case ("GET", "/ax-debug"):
+            respond(on: connection, status: 200,
+                    body: NotifyResponse(ok: true,
+                                         state: AXProbe.describe(bundleID: request.query["app"] ?? "")))
+
         case ("GET", "/dock-debug"):
             respond(on: connection, status: 200,
                     body: NotifyResponse(ok: true, state: DockLocator.debugItems()))

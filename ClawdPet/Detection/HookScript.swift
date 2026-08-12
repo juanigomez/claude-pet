@@ -37,7 +37,7 @@ enum HookScript {
     #   state : thinking | needs_action | idle
     #   app   : opcional. Normalmente NO hace falta: mandamos nuestro PID y Claw'd Pet
     #           sube por el árbol de procesos hasta la terminal o el editor de donde
-    #           venimos. Usalo sólo si querés forzar otra app.
+    #           venimos. Si lo pasás, gana sobre la detección automática.
     #
     # Claude Code invoca los hooks pasando un JSON por stdin; este script lo ignora
     # a propósito para no depender de jq. Nunca falla: si la app no está corriendo,

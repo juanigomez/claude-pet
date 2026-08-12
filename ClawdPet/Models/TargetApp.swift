@@ -47,17 +47,19 @@ enum AppResolver {
         "xcode": "com.apple.dt.Xcode"
     ]
 
-    /// 1. Si vino el PID del hook, subimos por el árbol de procesos: es lo más exacto,
-    ///    porque identifica la ventana concreta donde estás trabajando.
-    /// 2. Si vino un `app`, lo resolvemos como alias, bundle id o nombre de app corriendo.
+    /// 1. Si pediste una app **explícitamente** (`--app`), gana: lo explícito le gana a
+    ///    lo inferido. El CLI manda siempre su PID, así que si el PID tuviera prioridad
+    ///    `--app` no serviría nunca para nada.
+    /// 2. Si no, subimos por el árbol de procesos desde el PID: identifica la terminal
+    ///    o el editor concreto donde estás trabajando.
     /// 3. Si no vino nada, usamos la app que está al frente en ese momento.
     @MainActor
     static func resolve(pid: pid_t?, identifier: String?) -> TargetApp? {
-        if let pid, pid > 0, let running = ProcessTree.owningApplication(of: pid),
-           let target = TargetApp(running) {
+        if let identifier, !identifier.isEmpty, let target = resolveIdentifier(identifier) {
             return target
         }
-        if let identifier, !identifier.isEmpty, let target = resolveIdentifier(identifier) {
+        if let pid, pid > 0, let running = ProcessTree.owningApplication(of: pid),
+           let target = TargetApp(running) {
             return target
         }
         if let frontmost = NSWorkspace.shared.frontmostApplication,

@@ -34,6 +34,8 @@ struct PetRootView: View {
 
     @State private var promptText = ""
     @FocusState private var promptFocused: Bool
+    /// Ancho medido de lo que hay sobre la cabeza, para poder mantenerlo en pantalla.
+    @State private var overheadWidth: CGFloat = 0
 
     private var layout: PetLayout { controller.layout }
     private var scale: CGFloat { CGFloat(layout.scale) }
@@ -41,6 +43,23 @@ struct PetRootView: View {
 
     /// Separación entre la cabeza y lo que sea que esté arriba (burbuja o input).
     private var headGap: CGFloat { max(6, scale * 1.6) }
+    /// Aire mínimo contra los bordes de la pantalla.
+    private var edgeInset: CGFloat { 10 }
+
+    /// Cuánto hay que correr la burbuja para que no se salga de la pantalla.
+    ///
+    /// La burbuja va centrada en la mascota, pero es mucho más ancha que ella: con la
+    /// mascota cerca de un borde, media respuesta quedaba cortada fuera de pantalla.
+    /// La corremos hacia adentro y la colita compensa para seguir apuntándole.
+    private var overheadShift: CGFloat {
+        guard overheadWidth > 0 else { return 0 }
+        let petX = CGFloat(controller.frame.x)
+        let half = overheadWidth / 2
+        let width = CGFloat(layout.width)
+        if petX - half < edgeInset { return edgeInset - (petX - half) }
+        if petX + half > width - edgeInset { return (width - edgeInset) - (petX + half) }
+        return 0
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -89,10 +108,19 @@ struct PetRootView: View {
                 SpeechBubbleView(content: bubble,
                                  time: controller.frame.time,
                                  scale: scale,
-                                 tint: tint)
+                                 tint: tint,
+                                 tailOffset: -overheadShift)
             }
         }
         .fixedSize()
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { overheadWidth = proxy.size.width }
+                    .onChange(of: proxy.size.width) { _, new in overheadWidth = new }
+            }
+        }
+        .offset(x: overheadShift)
         .reportsHitRect()
         // Redefinimos la guía `.top` de lo que va arriba para que su borde inferior
         // quede `headGap` por encima de la cabeza. Sin esto la burbuja se superpone
@@ -127,7 +155,8 @@ struct PetRootView: View {
         .background {
             let shape = BubbleShape(corner: max(8, scale * 2.2),
                                     tailWidth: max(12, scale * 3.4),
-                                    tailHeight: max(5, scale * 1.1))
+                                    tailHeight: max(5, scale * 1.1),
+                                    tailOffset: -overheadShift)
             shape
                 .fill(tint.bubbleFill)
                 .overlay { shape.stroke(tint.bubbleStroke, lineWidth: 1) }

@@ -53,9 +53,19 @@ if [[ -n "${CLAWDPET_SIGN_IDENTITY:-}" ]]; then
     --sign "$CLAWDPET_SIGN_IDENTITY" "$APP"
 else
   # Re-firmamos igual: tocar el Info.plist arriba invalidó la firma que puso Xcode.
-  echo "▸ Firmando ad-hoc (sin cuenta de developer)."
+  #
+  # Con el requisito designado por defecto (el hash del binario), cada versión nueva
+  # invalida el permiso de Accesibilidad que la gente ya dio, y hay que explicarles que
+  # lo vuelvan a dar en cada update. Lo atamos al bundle identifier para que sobreviva.
+  #
+  # Es más laxo a propósito: otra app que se hiciera pasar por este identifier heredaría
+  # el permiso. Como la app se distribuye sin firmar de todas formas, el riesgo adicional
+  # es acotado frente al costo de re-pedirlo siempre. Con Developer ID esto no hace falta
+  # (el requisito queda atado al certificado), y por eso arriba no se aplica.
+  echo "▸ Firmando ad-hoc con requisito estable por identifier."
   codesign --force --sign - "$APP/Contents/Resources/clawdpet"
-  codesign --force --sign - "$APP"
+  codesign --force --sign - \
+    -r='designated => identifier "com.clawdpet.ClawdPet"' "$APP"
 fi
 
 codesign --verify --strict "$APP"
