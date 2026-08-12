@@ -73,18 +73,27 @@ struct PetRootView: View {
                 - side / 2
                 + CGFloat(controller.frame.bounceY)
 
-            ClawdSpriteView(scale: scale,
-                            walkFrame: controller.frame.walkFrame,
-                            blinking: controller.frame.blinking,
-                            tint: tint)
-                .scaleEffect(x: controller.frame.facing.scaleX, y: 1, anchor: .center)
-                .overlay(alignment: .top) { overhead }
-                .contentShape(Rectangle())
-                .reportsHitRect()
-                // Redondeamos a punto entero: el pixel-art se ve sucio si cae en
-                // coordenadas fraccionarias (bordes antialiaseados entre colores).
-                .position(x: CGFloat(controller.frame.x).rounded(), y: centerY.rounded())
-                .onTapGesture { controller.handleClick() }
+            // El sprite espejado (mirar para la izquierda) va en un ZStack, no en
+            // `.overlay()`: con `.overlay(alignment:)` sobre una vista con
+            // `.scaleEffect(x: -1)`, SwiftUI resuelve el `alignmentGuide` de la
+            // burbuja como si el volteo también corriera su eje vertical, y la
+            // burbuja terminaba pegada a la cabeza sólo cuando la mascota miraba
+            // para la izquierda. El `ZStack` no tiene ese acoplamiento: cada hijo
+            // se transforma por separado antes de alinearse.
+            ZStack(alignment: .top) {
+                ClawdSpriteView(scale: scale,
+                                walkFrame: controller.frame.walkFrame,
+                                blinking: controller.frame.blinking,
+                                tint: tint)
+                    .scaleEffect(x: controller.frame.facing.scaleX, y: 1, anchor: .center)
+                overhead
+            }
+            .contentShape(Rectangle())
+            .reportsHitRect()
+            // Redondeamos a punto entero: el pixel-art se ve sucio si cae en
+            // coordenadas fraccionarias (bordes antialiaseados entre colores).
+            .position(x: CGFloat(controller.frame.x).rounded(), y: centerY.rounded())
+            .onTapGesture { controller.handleClick() }
         }
         .coordinateSpace(name: "petStrip")
         .onPreferenceChange(HitRectKey.self) { rect in
