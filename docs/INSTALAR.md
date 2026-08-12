@@ -4,7 +4,7 @@ Esto es lo que le pasás a alguien junto con el link de la release.
 
 ## 1. Descargar
 
-Bajá `ClawdPet-<version>.zip` desde la pestaña **Releases** del repo y hacé doble click
+Bajá `ClawdPet.zip` desde la pestaña **Releases** del repo y hacé doble click
 para descomprimirlo.
 
 ## 2. Mover a Aplicaciones
@@ -14,30 +14,31 @@ Descargas, la opción de «abrir al iniciar sesión» no va a funcionar.
 
 ## 3. Abrirla la primera vez
 
-> Esta app está firmada **ad-hoc**, no con una cuenta de Apple Developer. macOS avisa
-> la primera vez. Es el mismo aviso que da cualquier app open source que no pagó los
-> 99 USD al año.
+> Esta app está firmada **ad-hoc**, no con una cuenta de Apple Developer (99 USD al
+> año). macOS la bloquea la primera vez. Es el mismo aviso que da cualquier app open
+> source que no pagó esa cuota.
 
-macOS va a decir algo como *«No se puede abrir "ClawdPet" porque Apple no puede
-comprobar que no contenga software malicioso»*.
+Lo que bloquea no es la firma en sí, sino el **flag de cuarentena** que el navegador le
+pone a todo lo que descargás. Hay dos formas de sacarlo.
 
-**Solución (una sola vez):**
-
-1. Click derecho sobre ClawdPet.app → **Abrir**.
-2. En el diálogo, **Abrir** de nuevo.
-
-Si esa opción no aparece (macOS 15+ a veces la esconde):
-
-1. Abrí **Ajustes del Sistema ▸ Privacidad y seguridad**.
-2. Bajá hasta el mensaje sobre ClawdPet y tocá **Abrir igualmente**.
-
-O desde la terminal, en una línea:
+### La rápida, por terminal (siempre funciona)
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ClawdPet.app
 ```
 
-Después de la primera vez, se abre normal.
+Y listo, se abre normal para siempre.
+
+### Por interfaz
+
+1. Hacé doble click en la app. macOS la bloquea y muestra un aviso.
+2. Abrí **Ajustes del Sistema ▸ Privacidad y seguridad**.
+3. Bajá hasta el mensaje sobre ClawdPet y tocá **Abrir igualmente**.
+
+En macOS 14 y anteriores también funciona el atajo de **click derecho ▸ Abrir**; en las
+versiones nuevas Apple lo endureció y hay que pasar por Ajustes.
+
+Después de la primera vez, se abre como cualquier otra app.
 
 ## 4. Dar permiso de Accesibilidad
 
