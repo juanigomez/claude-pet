@@ -22,34 +22,15 @@ struct ClawdTint: Equatable {
     var bubbleStroke: Color
     var bubbleText: Color
 
-    static func tint(theme: PetTheme, state: PetState) -> ClawdTint {
+    static func tint(state: PetState) -> ClawdTint {
         let alerting = (state == .needsAction)
-        switch theme {
-        case .orange:
-            return ClawdTint(body: alerting ? hex(0xE25D33) : hex(0xD9714F),
-                             light: alerting ? hex(0xF08355) : hex(0xE8906F),
-                             dark: alerting ? hex(0xB84222) : hex(0xB05336),
-                             eye: hex(0x1A1A1A),
-                             bubbleFill: .white,
-                             bubbleStroke: Color.black.opacity(0.10),
-                             bubbleText: hex(0x1A1A1A))
-        case .dark:
-            return ClawdTint(body: alerting ? hex(0x4A4A52) : hex(0x33333A),
-                             light: alerting ? hex(0x5E5E68) : hex(0x44444D),
-                             dark: alerting ? hex(0x2A2A30) : hex(0x1E1E23),
-                             eye: alerting ? hex(0xE25D33) : hex(0xE6E6EA),
-                             bubbleFill: hex(0x24242A),
-                             bubbleStroke: Color.white.opacity(0.14),
-                             bubbleText: hex(0xF2F2F5))
-        case .light:
-            return ClawdTint(body: alerting ? hex(0xF2F2F5) : hex(0xEDEDF0),
-                             light: .white,
-                             dark: alerting ? hex(0xC9C9D2) : hex(0xD3D3DA),
-                             eye: alerting ? hex(0xE25D33) : hex(0x2A2A30),
-                             bubbleFill: .white,
-                             bubbleStroke: Color.black.opacity(0.12),
-                             bubbleText: hex(0x1A1A1A))
-        }
+        return ClawdTint(body: alerting ? hex(0xE25D33) : hex(0xD9714F),
+                         light: alerting ? hex(0xF08355) : hex(0xE8906F),
+                         dark: alerting ? hex(0xB84222) : hex(0xB05336),
+                         eye: hex(0x1A1A1A),
+                         bubbleFill: .white,
+                         bubbleStroke: Color.black.opacity(0.10),
+                         bubbleText: hex(0x1A1A1A))
     }
 }
 
@@ -198,9 +179,9 @@ struct ClawdSpriteView: View {
     HStack(spacing: 24) {
         ForEach(0..<ClawdSprite.walkFrames.count, id: \.self) { frame in
             ClawdSpriteView(scale: 6, walkFrame: frame, blinking: false,
-                            tint: .tint(theme: .orange, state: .idle))
+                            tint: .tint(state: .idle))
         }
-        ClawdSpriteView(scale: 6, walkFrame: 1, blinking: true, tint: .tint(theme: .dark, state: .needsAction))
+        ClawdSpriteView(scale: 6, walkFrame: 1, blinking: true, tint: .tint(state: .needsAction))
     }
     .padding(40)
     .background(Color.gray.opacity(0.25))

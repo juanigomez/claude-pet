@@ -70,8 +70,8 @@ enum CLIInstaller {
     enum CLIError: LocalizedError {
         case notBundled
         var errorDescription: String? {
-            "No se encontró el ejecutable `clawdpet` dentro del bundle. "
-            + "Compilá el target ClawdPetCLI (viene en el mismo proyecto) y volvé a correr la app."
+            "Couldn't find the `clawdpet` executable inside the bundle. "
+            + "Build the ClawdPetCLI target (it's in the same project) and run the app again."
         }
     }
 }

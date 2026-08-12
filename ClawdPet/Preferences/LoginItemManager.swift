@@ -32,11 +32,11 @@ enum LoginItemManager {
 
     static var statusDescription: String {
         switch SMAppService.mainApp.status {
-        case .enabled: return "activado"
-        case .notRegistered: return "desactivado"
-        case .requiresApproval: return "esperando tu aprobación en Ajustes ▸ General ▸ Ítems de inicio"
-        case .notFound: return "no encontrado"
-        @unknown default: return "desconocido"
+        case .enabled: return "enabled"
+        case .notRegistered: return "disabled"
+        case .requiresApproval: return "waiting for your approval in Settings ▸ General ▸ Login Items"
+        case .notFound: return "not found"
+        @unknown default: return "unknown"
         }
     }
 }

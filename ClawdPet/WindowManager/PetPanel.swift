@@ -49,26 +49,10 @@ final class PetPanel: NSPanel {
         isReleasedWhenClosed = false
         animationBehavior = .none
         // Por defecto es "transparente al mouse": sólo se activa cuando el cursor
-        // está encima de la mascota o la burbuja (ver PetWindowController).
+        // está encima de la mascota (ver PetWindowController). Nunca roba el foco.
         ignoresMouseEvents = true
     }
 
-    /// Normalmente la mascota nunca roba el foco. La excepción es el campo de texto
-    /// para preguntarle a Claude: mientras está abierto el panel tiene que poder ser
-    /// *key* para recibir teclas. Como es un `.nonactivatingPanel`, recibe el teclado
-    /// **sin** activar la app ni sacarle el foco a tu editor (igual que Spotlight).
-    var acceptsKeyInput = false {
-        didSet {
-            guard acceptsKeyInput != oldValue else { return }
-            if acceptsKeyInput {
-                makeKeyAndOrderFront(nil)
-            } else if isKeyWindow {
-                resignKey()
-                orderFrontRegardless()
-            }
-        }
-    }
-
-    override var canBecomeKey: Bool { acceptsKeyInput }
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 }

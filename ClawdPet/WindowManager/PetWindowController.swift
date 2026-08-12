@@ -27,12 +27,6 @@ final class PetWindowController {
     /// Margen extra alrededor de la mascota para que sea fácil de clickear.
     private let hitPadding: CGFloat = 6
 
-    /// Alto real medido de la burbuja/campo de texto sobre la cabeza. Cuando una
-    /// respuesta larga necesita más lugar que la reserva por defecto, agrandamos la
-    /// franja en vez de dejar que se corte contra el borde de la ventana o tape a la
-    /// mascota.
-    private var overheadHeight: CGFloat = 0
-
     init(controller: PetController, store: ConfigStore) {
         self.controller = controller
         self.store = store
@@ -50,16 +44,11 @@ final class PetWindowController {
             .store(in: &cancellables)
 
         store.$config
-            .map { [$0.scale, $0.verticalOffset] }
+            .map(\.verticalOffset)
             .removeDuplicates()
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateGeometry() }
             .store(in: &cancellables)
-
-        // El campo de texto necesita que el panel pueda ser key mientras está abierto.
-        controller.onPromptVisibilityChange = { [weak self] prompting in
-            self?.setKeyInput(prompting)
-        }
 
         NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -91,10 +80,7 @@ final class PetWindowController {
 
     private func buildPanel() {
         let panel = PetPanel(contentRect: NSRect(x: 0, y: 0, width: 800, height: 200))
-        let root = PetRootView(controller: controller,
-                               onOverheadHeightChange: { [weak self] height in
-            self?.updateOverheadHeight(height)
-        }) { [weak self] rect in
+        let root = PetRootView(controller: controller) { [weak self] rect in
             self?.updateHitRect(rect)
         }
         let hosting = NSHostingView(rootView: root)
@@ -120,26 +106,18 @@ final class PetWindowController {
         // Alto del Dock cuando está abajo (0 si está a los costados o auto-oculto).
         let dockHeight = max(0, visible.minY - screenFrame.minY)
 
-        let scale = store.config.scale
+        let scale = PetConstants.scale
         let spriteSide = Double(ClawdSprite.gridSize) * scale
         // **Todo entero.** Si la franja mide alto fraccionario, el sprite termina
         // dibujado en medio píxel y el pixel-art se ve borroso y "torcido".
         // Con `floorY`, `stripHeight` y `spriteSide` enteros, la posición final del
         // sprite en pantalla cae siempre en un punto entero.
         let floorY = max(0, (dockHeight + store.config.verticalOffset).rounded())
-        // Reservamos lugar arriba para la burbuja: por defecto una estimación en base a
-        // la escala, pero si lo que mide la vista (una respuesta larga de 4 líneas) es
-        // más alto, usamos eso. Sin este máximo, una respuesta larga terminaba cortada
-        // contra el borde de la ventana o tapando a la mascota.
-        let headGap = max(6, scale * 1.6)
-        let estimatedOverhead = spriteSide * 1.8 + 16
-        let measuredOverhead = overheadHeight > 0 ? Double(overheadHeight) + headGap + 4 : 0
-        // Ahora que la burbuja de respuesta no trunca el texto (ver SpeechBubbleView),
-        // una respuesta larguísima podría pedir más alto que la pantalla entera. La
-        // franja nunca puede ser más alta que la pantalla, así que la recortamos ahí:
-        // el exceso de texto queda arriba del borde en vez de estirar la ventana.
-        let stripHeight = min(screenFrame.height,
-                              (floorY + spriteSide + max(estimatedOverhead, measuredOverhead)).rounded(.up))
+        // Lugar reservado arriba para la burbuja de "pensando": es la única que existe
+        // y su tamaño es fijo (no hay texto que crezca), así que alcanza con una
+        // estimación en base a la escala.
+        let overhead = spriteSide * 1.8 + 16
+        let stripHeight = (floorY + spriteSide + overhead).rounded(.up)
 
         let newFrame = NSRect(x: screenFrame.minX,
                               y: screenFrame.minY,
@@ -160,13 +138,6 @@ final class PetWindowController {
             controller.layout = layout
         }
         controller.layoutOriginX = Double(screenFrame.minX)
-    }
-
-    /// Se llama cada vez que la vista mide el alto real de la burbuja/campo de texto.
-    private func updateOverheadHeight(_ height: CGFloat) {
-        guard abs(overheadHeight - height) > 0.5 else { return }
-        overheadHeight = height
-        updateGeometry()
     }
 
     // MARK: - `ignoresMouseEvents` dinámico
@@ -203,17 +174,6 @@ final class PetWindowController {
         self.geometryTimer = geometryTimer
     }
 
-    /// Mientras el campo de texto está abierto el panel acepta teclado y no puede
-    /// ser transparente al mouse (si no, el click en el campo se iría a la app de abajo).
-    private func setKeyInput(_ enabled: Bool) {
-        guard let panel else { return }
-        panel.acceptsKeyInput = enabled
-        if enabled {
-            panel.ignoresMouseEvents = false
-            lastIgnoresMouse = false
-        }
-    }
-
     private func stopTimers() {
         mouseTimer?.invalidate(); mouseTimer = nil
         geometryTimer?.invalidate(); geometryTimer = nil
@@ -221,8 +181,6 @@ final class PetWindowController {
 
     private func updateMouseTransparency() {
         guard let panel, panel.isVisible else { return }
-        // Con el campo de texto abierto queremos capturar todos los clicks del área.
-        guard !panel.acceptsKeyInput else { return }
         let mouse = NSEvent.mouseLocation                     // pantalla, y hacia arriba
         let local = CGPoint(x: mouse.x - panel.frame.minX,
                             y: mouse.y - panel.frame.minY)    // ventana, y hacia arriba

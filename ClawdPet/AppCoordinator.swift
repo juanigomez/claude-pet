@@ -12,7 +12,7 @@ final class AppCoordinator: ObservableObject {
 
     private let server = NotifyServer()
 
-    @Published private(set) var serverStatusText: String = "iniciando…"
+    @Published private(set) var serverStatusText: String = "starting…"
     @Published private(set) var isServerRunning: Bool = false
     @Published private(set) var hookScriptURL: URL?
 
@@ -37,7 +37,7 @@ final class AppCoordinator: ObservableObject {
             guard let self else { return }
             self.serverStatusText = status.description
             if case .running = status { self.isServerRunning = true } else { self.isServerRunning = false }
-            NSLog("[ClawdPet] servidor de avisos: %@", status.description)
+            NSLog("[ClawdPet] notify server: %@", status.description)
         }
         server.start(port: store.config.httpPort)
 
@@ -84,28 +84,28 @@ final class AppCoordinator: ObservableObject {
     func installEverything() -> String {
         switch CLIInstaller.install() {
         case .failure(let error):
-            return "No pude instalar el CLI: \(error.localizedDescription)"
+            return "Couldn't install the CLI: \(error.localizedDescription)"
         case .success:
             break
         }
         do {
             let report = try ClaudeCodeHooks.install(cliDirectory: CLIInstaller.installedDirectory)
-            var lines = ["Listo. `clawdpet` y `clawdpet-hook` quedaron en \(CLIInstaller.installedDirectory.path)."]
+            var lines = ["Done. `clawdpet` and `clawdpet-hook` are now in \(CLIInstaller.installedDirectory.path)."]
             if report.replaced.isEmpty {
-                lines.append("Hooks agregados: \(ClaudeCodeHooks.mapping.map(\.event).joined(separator: ", ")).")
+                lines.append("Hooks added: \(ClaudeCodeHooks.mapping.map(\.event).joined(separator: ", ")).")
             } else {
-                lines.append("Hooks actualizados: \(report.replaced.joined(separator: ", ")).")
+                lines.append("Hooks updated: \(report.replaced.joined(separator: ", ")).")
             }
             if report.kept > 0 {
-                lines.append("Se conservaron \(report.kept) hooks tuyos que no eran de Claw'd Pet.")
+                lines.append("Kept \(report.kept) of your own hooks that weren't Claw'd Pet's.")
             }
             if let backup = report.backupPath {
                 lines.append("Backup: \((backup as NSString).lastPathComponent)")
             }
-            lines.append("Abrí una sesión nueva de Claude Code para que tome los hooks.")
+            lines.append("Start a new Claude Code session for it to pick up the hooks.")
             return lines.joined(separator: "\n")
         } catch {
-            return "CLI instalado, pero fallaron los hooks: \(error.localizedDescription)"
+            return "CLI installed, but the hooks failed: \(error.localizedDescription)"
         }
     }
 

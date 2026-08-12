@@ -6,11 +6,11 @@ import ApplicationServices
 ///
 /// ```
 /// POST http://127.0.0.1:8787/notify
-/// { "app": "claude-code", "state": "needs_action", "message": "Necesito tu OK" }
+/// { "app": "claude-code", "state": "needs_action" }
 /// ```
 ///
-/// También acepta `GET /notify?state=thinking&app=vscode&message=...` para poder
-/// dispararlo con un `curl` de una línea, y `GET /health` para chequear que está vivo.
+/// También acepta `GET /notify?state=thinking&app=vscode` para poder dispararlo con
+/// un `curl` de una línea, y `GET /health` para chequear que está vivo.
 final class NotifyServer {
 
     enum Status: Equatable {
@@ -20,8 +20,8 @@ final class NotifyServer {
 
         var description: String {
             switch self {
-            case .stopped: return "detenido"
-            case .running(let port): return "escuchando en 127.0.0.1:\(port)"
+            case .stopped: return "stopped"
+            case .running(let port): return "listening on 127.0.0.1:\(port)"
             case .failed(let reason): return "error: \(reason)"
             }
         }
@@ -70,7 +70,7 @@ final class NotifyServer {
     func start(port: Int) {
         stop()
         guard let nwPort = NWEndpoint.Port(rawValue: UInt16(clamping: port)) else {
-            status = .failed("puerto inválido: \(port)")
+            status = .failed("invalid port: \(port)")
             return
         }
 
@@ -116,7 +116,7 @@ final class NotifyServer {
     private static func describe(_ error: Error, port: Int) -> String {
         if let nwError = error as? NWError,
            case .posix(let code) = nwError, code == .EADDRINUSE {
-            return "el puerto \(port) ya está ocupado"
+            return "port \(port) is already in use"
         }
         return error.localizedDescription
     }
@@ -150,7 +150,7 @@ final class NotifyServer {
 
             if buffer.count > self.maxRequestBytes {
                 self.respond(on: connection, status: 413,
-                             body: NotifyResponse(ok: false, error: "request demasiado grande"))
+                             body: NotifyResponse(ok: false, error: "request too large"))
                 return
             }
 
@@ -188,7 +188,7 @@ final class NotifyServer {
                     body: NotifyResponse(ok: true, state: "up",
                                          accessibility: AXIsProcessTrusted(),
                                          dock: DockLocator.iconStripFrame().map {
-                                             "x \(Int($0.minX))…\(Int($0.maxX)) (ancho \(Int($0.width)))"
+                                             "x \(Int($0.minX))…\(Int($0.maxX)) (width \(Int($0.width)))"
                                          },
                                          pet: currentDiagnostics))
 
@@ -200,20 +200,18 @@ final class NotifyServer {
                 ?? NotifyPayload()
             if let state = request.query["state"] { payload.state = state }
             if let app = request.query["app"] { payload.app = app }
-            if let message = request.query["message"] { payload.message = message }
             if let pid = request.query["pid"].flatMap(Int32.init) { payload.pid = pid }
-            if let duration = request.query["duration"].flatMap(Double.init) { payload.duration = duration }
 
             guard !payload.state.isEmpty else {
                 respond(on: connection, status: 400,
                         body: NotifyResponse(ok: false,
-                                             error: "falta `state` (en el JSON o como ?state=)"))
+                                             error: "missing `state` (in the JSON body or as ?state=)"))
                 return
             }
             deliver(payload, on: connection)
 
         default:
-            respond(on: connection, status: 404, body: NotifyResponse(ok: false, error: "ruta desconocida"))
+            respond(on: connection, status: 404, body: NotifyResponse(ok: false, error: "unknown route"))
         }
     }
 
@@ -221,7 +219,7 @@ final class NotifyServer {
         guard let resolved = payload.petState else {
             respond(on: connection, status: 400,
                     body: NotifyResponse(ok: false,
-                                         error: "state debe ser idle | thinking | needs_action"))
+                                         error: "state must be idle | thinking | needs_action"))
             return
         }
         DispatchQueue.main.async { [weak self] in self?.onPayload?(payload) }

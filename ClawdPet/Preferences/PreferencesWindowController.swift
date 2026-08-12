@@ -17,7 +17,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate {
         window.title = "Claw'd Pet"
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 540, height: 560))
+        window.setContentSize(NSSize(width: 480, height: 392))
         window.center()
 
         self.init(window: window)

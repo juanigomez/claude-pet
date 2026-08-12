@@ -7,17 +7,17 @@ struct PreferencesView: View {
 
     var body: some View {
         TabView {
-            GeneralTab(coordinator: coordinator, store: store)
+            GeneralTab(store: store)
                 .tabItem { Label("General", systemImage: "gearshape") }
             IntegrationTab(coordinator: coordinator, store: store)
-                .tabItem { Label("Integración", systemImage: "network") }
+                .tabItem { Label("Integration", systemImage: "network") }
             PermissionsTab(coordinator: coordinator)
-                .tabItem { Label("Permisos", systemImage: "lock.shield") }
+                .tabItem { Label("Permissions", systemImage: "lock.shield") }
         }
         // El aire de arriba es lo que separa la barra de solapas del title bar de la
         // ventana; sin esto quedan pegadas y se ve un seam gris.
         .padding(.top, 12)
-        .frame(width: 540, height: 580)
+        .frame(width: 480, height: 380)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 }
@@ -25,16 +25,15 @@ struct PreferencesView: View {
 // MARK: - General
 
 private struct GeneralTab: View {
-    @ObservedObject var coordinator: AppCoordinator
     @ObservedObject var store: ConfigStore
     @State private var loginError: String?
 
     var body: some View {
         Form {
             Section {
-                Toggle("Mostrar la mascota", isOn: $store.config.enabled)
-                Toggle("Sonido al pedir atención", isOn: $store.config.soundEnabled)
-                Toggle("Abrir al iniciar sesión", isOn: Binding(
+                Toggle("Show the pet", isOn: $store.config.enabled)
+                Toggle("Sound when it needs attention", isOn: $store.config.soundEnabled)
+                Toggle("Open at login", isOn: Binding(
                     get: { store.config.launchAtLogin },
                     set: { newValue in
                         store.config.launchAtLogin = newValue
@@ -52,64 +51,15 @@ private struct GeneralTab: View {
                 }
             }
 
-            Section("Aspecto") {
-                Picker("Tema", selection: $store.config.theme) {
-                    ForEach(PetTheme.allCases) { theme in
-                        Text(theme.displayName).tag(theme)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                ThemePreviewRow(theme: store.config.theme)
-
-                slider("Tamaño", value: $store.config.scale, range: 2...8, step: 1) {
-                    "×\(Int($0))"
-                }
-            }
-
-            Section("Comportamiento") {
-                slider("Velocidad", value: $store.config.walkSpeed, range: 10...200) {
-                    "\(Int($0)) pt/s"
-                }
-                slider("Altura", value: $store.config.verticalOffset, range: -40...80, step: 1) {
-                    "\(Int($0)) pt"
-                }
-                slider("Duración del mensaje", value: $store.config.messageDuration,
-                       range: 2...60, step: 1) { "\(Int($0)) s" }
-
-                Toggle("No pasarse del Dock", isOn: $store.config.stayOnDock)
-                Text("Camina sólo sobre el ancho de los íconos del Dock en vez de toda la pantalla. Necesita permiso de Accesibilidad para medirlo.")
+            Section {
+                Toggle("Stay on the Dock", isOn: $store.config.stayOnDock)
+                Text("Walks only over the width of the Dock icons instead of the whole screen. Needs Accessibility permission to measure it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Toggle("Click abre el campo para preguntarle a Claude",
-                       isOn: $store.config.clickOpensPrompt)
-                Text("Cuando la mascota te está reclamando algo, el click siempre te lleva a esa app en vez de abrir el campo.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if store.config.clickOpensPrompt {
-                    Picker("Qué hace con tu pregunta", selection: $store.config.promptTarget) {
-                        ForEach(PromptTarget.allCases) { target in
-                            Text(target.displayName).tag(target)
-                        }
-                    }
-                    if store.config.promptTarget == .bubble {
-                        Label(ClaudeCLIBridge.locateBinary().map { "Usa \($0.path) — sin API key ni permisos" }
-                              ?? "No encontré el comando `claude`. Instalá Claude Code para usar esta opción.",
-                              systemImage: ClaudeCLIBridge.isAvailable ? "checkmark.circle" : "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(ClaudeCLIBridge.isAvailable
-                                             ? AnyShapeStyle(.secondary)
-                                             : AnyShapeStyle(Color.orange))
-                    } else {
-                        Text("Necesita permiso de Accesibilidad para escribir en Claude Desktop.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                slider("Vertical offset", value: $store.config.verticalOffset,
+                       range: -40...80, step: 1) { "\(Int($0)) pt" }
             }
-
         }
         .formStyle(.grouped)
     }
@@ -135,38 +85,7 @@ private struct GeneralTab: View {
     }
 }
 
-/// Muestra la mascota con el tema elegido, en sus tres estados.
-private struct ThemePreviewRow: View {
-    let theme: PetTheme
-
-    var body: some View {
-        HStack(spacing: 22) {
-            ForEach(PetState.allCases, id: \.self) { state in
-                VStack(spacing: 6) {
-                    ClawdSpriteView(scale: 3,
-                                    walkFrame: state == .idle ? 0 : ClawdSprite.standFrame,
-                                    blinking: false,
-                                    tint: .tint(theme: theme, state: state))
-                    Text(shortName(state))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func shortName(_ state: PetState) -> String {
-        switch state {
-        case .idle: return "idle"
-        case .thinking: return "pensando"
-        case .needsAction: return "alerta"
-        }
-    }
-}
-
-// MARK: - Integración (HTTP + hooks + CLI)
+// MARK: - Integration (HTTP + hooks + CLI)
 
 private struct IntegrationTab: View {
     @ObservedObject var coordinator: AppCoordinator
@@ -179,7 +98,7 @@ private struct IntegrationTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                GroupBox("Servidor local") {
+                GroupBox("Local server") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Circle()
@@ -190,13 +109,13 @@ private struct IntegrationTab: View {
                             Spacer()
                         }
                         HStack {
-                            Text("Puerto")
+                            Text("Port")
                             TextField("", value: $store.config.httpPort,
                                       format: .number.grouping(.never))
                                 .frame(width: 70)
-                            Button("Reiniciar servidor") { coordinator.restartServer() }
+                            Button("Restart server") { coordinator.restartServer() }
                         }
-                        Text("Sólo escucha en 127.0.0.1; no queda expuesto a la red.")
+                        Text("Only listens on 127.0.0.1; never exposed to the network.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -204,20 +123,20 @@ private struct IntegrationTab: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                GroupBox("Conectar con Claude Code") {
+                GroupBox("Connect to Claude Code") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Instala `clawdpet` y `clawdpet-hook` en `~/.local/bin` y escribe los hooks en `~/.claude/settings.json`, con backup del que tengas.")
+                        Text("Installs `clawdpet` and `clawdpet-hook` in `~/.local/bin` and writes the hooks to `~/.claude/settings.json`, backing up whatever you already have.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         HStack {
-                            Button("Conectar ahora") {
+                            Button("Connect now") {
                                 hookMessage = coordinator.installEverything()
                             }
                             .buttonStyle(.borderedProminent)
-                            Button("Copiar comando con sudo") {
+                            Button("Copy sudo command") {
                                 copy(CLIInstaller.manualCommand)
-                                cliMessage = "Comando copiado al portapapeles"
+                                cliMessage = "Command copied to the clipboard"
                             }
                         }
                         if let hookMessage {
@@ -229,7 +148,7 @@ private struct IntegrationTab: View {
                         if let cliMessage {
                             Text(cliMessage).font(.caption).foregroundStyle(.secondary)
                         }
-                        Text("No hace falta configurar qué app es cuál: el hook manda su PID y Claw'd Pet sube por el árbol de procesos hasta la terminal o el editor de donde vino.")
+                        Text("No need to configure which app is which: the hook sends its PID and Claw'd Pet climbs the process tree up to the terminal or editor it came from.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -238,9 +157,9 @@ private struct IntegrationTab: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                GroupBox("Disparar a mano") {
+                GroupBox("Trigger by hand") {
                     VStack(alignment: .leading, spacing: 8) {
-                        SnippetView(text: "clawdpet notify --state needs_action --message \"Build falló\"")
+                        SnippetView(text: "clawdpet notify --state needs_action")
                         SnippetView(text: curlSnippet)
                     }
                     .padding(6)
@@ -255,7 +174,7 @@ private struct IntegrationTab: View {
         """
         curl -s -X POST http://127.0.0.1:\(port)/notify \\
           -H 'Content-Type: application/json' \\
-          -d '{"state":"needs_action","message":"Necesito tu OK"}'
+          -d '{"state":"needs_action"}'
         """
     }
 
@@ -290,7 +209,7 @@ private struct SnippetView: View {
     }
 }
 
-// MARK: - Permisos
+// MARK: - Permissions
 
 private struct PermissionsTab: View {
     @ObservedObject var coordinator: AppCoordinator
@@ -303,8 +222,8 @@ private struct PermissionsTab: View {
                       ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     .foregroundStyle(permissions.isTrusted ? .green : .orange)
                 Text(permissions.isTrusted
-                     ? "Accesibilidad concedida"
-                     : "Accesibilidad no concedida")
+                     ? "Accessibility granted"
+                     : "Accessibility not granted")
                     .font(.headline)
             }
 
@@ -315,20 +234,20 @@ private struct PermissionsTab: View {
 
             if !permissions.isTrusted {
                 HStack {
-                    Button("Pedir permiso") { permissions.requestAccess() }
+                    Button("Request permission") { permissions.requestAccess() }
                         .buttonStyle(.borderedProminent)
-                    Button("Abrir Ajustes del Sistema…") { permissions.openSystemSettings() }
+                    Button("Open System Settings…") { permissions.openSystemSettings() }
                 }
 
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("¿Ya lo activaste y sigue en rojo?")
+                        Text("Already turned it on and it's still red?")
                             .font(.callout.bold())
                         Text(PermissionsManager.staleGrantExplanation)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Button("Reiniciar Claw'd Pet") { coordinator.relaunch() }
+                        Button("Restart Claw'd Pet") { coordinator.relaunch() }
                     }
                     .padding(6)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -340,7 +259,7 @@ private struct PermissionsTab: View {
             // Clave para diagnosticar: el permiso se le da a UNA copia concreta de la
             // app. Si concediste el permiso a otra copia (por ejemplo la de
             // DerivedData) esta no lo tiene.
-            Text("Esta copia de la app es la que tiene que estar autorizada:")
+            Text("This is the copy of the app that needs to be authorized:")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack(spacing: 6) {
@@ -355,10 +274,10 @@ private struct PermissionsTab: View {
                     Image(systemName: "folder")
                 }
                 .buttonStyle(.borderless)
-                .help("Mostrar en el Finder")
+                .help("Show in Finder")
             }
 
-            Text("Config guardada en:")
+            Text("Config saved at:")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(ConfigStore.configURL.path)

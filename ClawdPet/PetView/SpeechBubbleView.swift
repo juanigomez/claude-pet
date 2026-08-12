@@ -100,16 +100,10 @@ struct ThinkingDotsView: View {
     }
 }
 
-enum BubbleContent: Equatable {
-    case dots
-    case text(String)
-    /// Estado "necesita tu acción": mostramos **qué app** te está reclamando, que es
-    /// la información accionable, y el mensaje opcional debajo.
-    case attention(app: String?, message: String?)
-}
-
+/// La única burbuja que existe: los puntitos de "pensando". Nada de texto ni
+/// avisos con contenido — el aviso de "necesita tu acción" es la mascota yendo
+/// hasta la app y quedándose ahí, no una burbuja.
 struct SpeechBubbleView: View {
-    var content: BubbleContent
     var time: Double
     var scale: CGFloat
     var tint: ClawdTint
@@ -126,76 +120,28 @@ struct SpeechBubbleView: View {
     private var padV: CGFloat { max(5, scale * 1.4) }
 
     var body: some View {
-        Group {
-            switch content {
-            case .dots:
-                ThinkingDotsView(time: time, dotSize: max(4, scale * 1.15), color: tint.bubbleText)
-                    .padding(.horizontal, padH)
-                    .padding(.vertical, padV)
-            case .text(let string):
-                Text(string)
-                    .font(.system(size: max(10, scale * 2.4), weight: .medium, design: .rounded))
-                    .foregroundStyle(tint.bubbleText)
-                    // Sin tope de líneas: la burbuja crece para arriba (ver el anclaje
-                    // por `alignmentGuide` en PetRootView) en vez de cortar la respuesta
-                    // con "…". El ancho fijo de abajo evita que se dispare a lo ancho.
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    // Tope de ancho para que un mensaje largo no se coma la pantalla.
-                    .frame(maxWidth: max(180, scale * 52))
-                    .padding(.horizontal, padH)
-                    .padding(.vertical, padV)
-
-            case .attention(let app, let message):
-                VStack(spacing: max(2, scale * 0.5)) {
-                    if let app {
-                        HStack(spacing: max(3, scale * 0.8)) {
-                            Image(systemName: "arrow.up.forward.app.fill")
-                                .font(.system(size: max(9, scale * 2.1)))
-                            Text(app)
-                                .font(.system(size: max(11, scale * 2.6),
-                                              weight: .semibold, design: .rounded))
-                                .lineLimit(1)
-                        }
-                        .foregroundStyle(tint.bubbleText)
-                    }
-                    if let message, !message.isEmpty {
-                        Text(message)
-                            .font(.system(size: max(9, scale * 2.1), design: .rounded))
-                            .foregroundStyle(tint.bubbleText.opacity(0.7))
-                            .lineLimit(2)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .frame(maxWidth: max(180, scale * 52))
-                .padding(.horizontal, padH)
-                .padding(.vertical, padV)
+        ThinkingDotsView(time: time, dotSize: max(4, scale * 1.15), color: tint.bubbleText)
+            .padding(.horizontal, padH)
+            .padding(.vertical, padV)
+            .padding(.bottom, tailHeight)   // el espacio de la colita
+            .background {
+                let shape = BubbleShape(corner: corner,
+                                        tailWidth: tailWidth,
+                                        tailHeight: tailHeight,
+                                        tailOffset: tailOffset)
+                shape
+                    .fill(tint.bubbleFill)
+                    .overlay { shape.stroke(tint.bubbleStroke, lineWidth: 1) }
+                    .shadow(color: .black.opacity(0.16), radius: 3, y: 1)
             }
-        }
-        .padding(.bottom, tailHeight)   // el espacio de la colita
-        .background {
-            let shape = BubbleShape(corner: corner,
-                                    tailWidth: tailWidth,
-                                    tailHeight: tailHeight,
-                                    tailOffset: tailOffset)
-            shape
-                .fill(tint.bubbleFill)
-                .overlay { shape.stroke(tint.bubbleStroke, lineWidth: 1) }
-                .shadow(color: .black.opacity(0.16), radius: 3, y: 1)
-        }
     }
 }
 
 #if DEBUG
 #Preview {
     VStack(spacing: 20) {
-        SpeechBubbleView(content: .dots, time: 0.3, scale: 5,
-                         tint: .tint(theme: .orange, state: .thinking))
-        SpeechBubbleView(content: .text("Necesito tu OK"), time: 0, scale: 5,
-                         tint: .tint(theme: .orange, state: .needsAction))
-        SpeechBubbleView(content: .text("Necesito tu OK"), time: 0, scale: 5,
-                         tint: .tint(theme: .dark, state: .needsAction))
+        SpeechBubbleView(time: 0.3, scale: 5, tint: .tint(state: .thinking))
+        SpeechBubbleView(time: 0.6, scale: 5, tint: .tint(state: .needsAction))
     }
     .padding(40)
     .background(Color.gray.opacity(0.3))

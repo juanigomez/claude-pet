@@ -10,8 +10,8 @@ struct PetLayout: Equatable {
     var height: Double = 200
     /// Altura del "piso" (borde superior del Dock) medida desde abajo de la ventana.
     var floorY: Double = 70
-    /// Escala del pixel-art.
-    var scale: Double = 4
+    /// Escala del pixel-art. Fija, ver `PetConstants.scale`.
+    var scale: Double = PetConstants.scale
 
     var spriteSide: Double { Double(ClawdSprite.gridSize) * scale }
     var margin: Double { spriteSide * 0.75 }
@@ -29,6 +29,11 @@ struct PetFrameState: Equatable {
 }
 
 /// El cerebro de la mascota: máquina de estados + motor de movimiento a 60 Hz.
+///
+/// Tres estados nada más: `idle` (camina), `thinking` (quieta, burbuja de "…") y
+/// `needsAction` (camina hasta la app y rebota ahí — sea porque pide permiso o
+/// porque terminó de responder). Sin burbujas con contenido: lo único que se
+/// muestra es la de "pensando".
 @MainActor
 final class PetController: ObservableObject {
 
@@ -36,19 +41,14 @@ final class PetController: ObservableObject {
 
     @Published private(set) var frame = PetFrameState()
     @Published private(set) var state: PetState = .idle
-    @Published private(set) var bubble: BubbleContent?
     @Published var layout = PetLayout()
     /// App que reclama atención (se detecta sola, ver `AppResolver`).
     @Published private(set) var pendingApp: TargetApp?
-    /// Está abierto el campo para preguntarle a Claude.
-    @Published private(set) var isPrompting = false
 
-    /// Avisa a la ventana que tiene que tomar (o soltar) el foco de teclado.
-    var onPromptVisibilityChange: ((Bool) -> Void)?
     /// Snapshot de diagnóstico, empujado 4 veces por segundo para `/health`.
     var onDiagnostics: ((String) -> Void)?
 
-    var tint: ClawdTint { .tint(theme: store.config.theme, state: state) }
+    var tint: ClawdTint { .tint(state: state) }
 
     // MARK: - Interno
 
@@ -60,14 +60,11 @@ final class PetController: ObservableObject {
     private var bounceStart: Double?
     private var nextBlink: Double = 3
     private var blinkEnd: Double = 0
-    private var messageExpiry: Double?
     private var stateEnteredAt: Double = 0
     private var walkAccumulator: Double = 0
     private var lastDiagnosticsPush: Double = 0
     /// De dónde salió el destino actual, para diagnóstico.
     private var targetSource = "—"
-    /// Hay una pregunta a `claude -p` en vuelo.
-    private var isAnswering = false
     private var cancellables = Set<AnyCancellable>()
 
     /// Si un estado `thinking` nunca recibe su `idle`, volvemos solos después de esto.
@@ -92,12 +89,6 @@ final class PetController: ObservableObject {
     init(store: ConfigStore) {
         self.store = store
         self.frame.x = layout.width / 2
-        store.$config
-            .map(\.scale)
-            .removeDuplicates()
-            .receive(on: RunLoop.main)
-            .sink { [weak self] scale in self?.layout.scale = scale }
-            .store(in: &cancellables)
         observeAppSwitches()
     }
 
@@ -135,7 +126,6 @@ final class PetController: ObservableObject {
     func stop() {
         timer?.invalidate()
         timer = nil
-        closePrompt()
     }
 
     // MARK: - API pública
@@ -146,16 +136,13 @@ final class PetController: ObservableObject {
         let target = (newState == .idle)
             ? nil
             : AppResolver.resolve(pid: payload.pid, identifier: payload.app)
-        setState(newState, app: target, message: payload.displayMessage, duration: payload.duration)
+        setState(newState, app: target)
     }
 
     /// Cuánto protegemos un aviso recién llegado de que un `thinking` lo pise.
     private let attentionGraceWindow: Double = 1.2
 
-    func setState(_ newState: PetState,
-                  app: TargetApp? = nil,
-                  message: String? = nil,
-                  duration: Double? = nil) {
+    func setState(_ newState: PetState, app: TargetApp? = nil) {
         // Cada hook de Claude Code arranca su propio proceso, así que dos eventos
         // consecutivos (PostToolUse de una herramienta y PermissionRequest de la
         // siguiente) pueden llegar desordenados por milisegundos. Si dejáramos que un
@@ -173,8 +160,6 @@ final class PetController: ObservableObject {
 
         switch newState {
         case .idle:
-            bubble = nil
-            messageExpiry = nil
             bounceStart = nil
             pendingApp = nil
             arrived = false
@@ -182,8 +167,6 @@ final class PetController: ObservableObject {
             pickNewIdleTarget()
 
         case .thinking:
-            bubble = .dots
-            messageExpiry = nil
             bounceStart = nil
             targetX = nil          // se queda quieta pensando
             arrived = false
@@ -191,100 +174,18 @@ final class PetController: ObservableObject {
         case .needsAction:
             arrived = false
             bounceStart = nil
-            // La burbuja muestra QUÉ app te reclama: es la info accionable, y no
-            // caduca — se va cuando clickeás (que te lleva a esa app) o cambia el estado.
-            bubble = .attention(app: pendingApp?.name, message: message)
-            messageExpiry = nil
             targetX = resolveTargetX(for: pendingApp)
             if changed && config.soundEnabled {
                 NSSound.beep()
             }
         }
-        if newState != .idle { closePrompt() }
     }
 
-    /// Click sobre la mascota o la burbuja.
+    /// Click sobre la mascota: te lleva a la app que te está reclamando.
     func handleClick() {
-        if state == .needsAction {
-            // Prioridad: llevarte a la app que te estaba reclamando.
-            pendingApp?.activate()
-            setState(.idle)
-            return
-        }
-        if config.clickOpensPrompt {
-            togglePrompt()
-        }
-    }
-
-    // MARK: - Campo para preguntarle a Claude
-
-    func togglePrompt() {
-        isPrompting ? closePrompt() : openPrompt()
-    }
-
-    func openPrompt() {
-        guard !isPrompting else { return }
-        isPrompting = true
-        targetX = nil            // se queda quieta mientras escribís
-        bubble = nil
-        onPromptVisibilityChange?(true)
-    }
-
-    func closePrompt() {
-        guard isPrompting else { return }
-        isPrompting = false
-        onPromptVisibilityChange?(false)
-        if state == .idle { pickNewIdleTarget() }
-    }
-
-    /// Qué hacemos con lo que escribiste: responder en la burbuja (default) o
-    /// mandarlo a Claude Desktop.
-    func submitPrompt(_ text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        closePrompt()
-        guard !trimmed.isEmpty else { return }
-
-        switch config.promptTarget {
-        case .bubble:
-            askClaude(trimmed)
-        case .claudeDesktop:
-            switch ClaudeDesktopBridge.send(trimmed) {
-            case .success:
-                showTransientMessage("Se lo mandé a Claude")
-            case .failure(let error):
-                showTransientMessage(error.shortMessage, duration: 6)
-            }
-        }
-    }
-
-    /// Corre `claude -p` y muestra la respuesta corta arriba de la cabeza.
-    /// Mientras espera, la mascota se queda "pensando" con los puntitos.
-    private func askClaude(_ prompt: String) {
-        let previousState = state
-        isAnswering = true
-        setState(.thinking)
-
-        ClaudeCLIBridge.ask(prompt) { [weak self] result in
-            guard let self, self.isAnswering else { return }
-            self.isAnswering = false
-            // Volvemos al estado que había antes de preguntar, sin pisar un aviso
-            // que haya llegado mientras tanto.
-            if self.state == .thinking {
-                self.setState(previousState == .thinking ? .idle : previousState)
-            }
-            switch result {
-            case .success(let answer):
-                self.showTransientMessage(answer, duration: max(10, self.config.messageDuration))
-            case .failure(let error):
-                self.showTransientMessage(error.shortMessage, duration: 8)
-            }
-        }
-    }
-
-    /// Mensaje corto que se auto-oculta, sin cambiar de estado.
-    func showTransientMessage(_ text: String, duration: Double = 3) {
-        bubble = .text(text)
-        messageExpiry = frame.time + duration
+        guard state == .needsAction else { return }
+        pendingApp?.activate()
+        setState(.idle)
     }
 
     // MARK: - Motor
@@ -301,13 +202,6 @@ final class PetController: ObservableObject {
             nextBlink = t + Double.random(in: 2.5...6.5)
         }
         f.blinking = t < blinkEnd
-
-        // Expiración del mensaje transitorio (respuestas, avisos del prompt).
-        // La burbuja de atención no caduca: se va al clickear o al cambiar de estado.
-        if let expiry = messageExpiry, t >= expiry {
-            messageExpiry = nil
-            if case .text = bubble { bubble = nil }
-        }
 
         // Watchdog del estado "pensando".
         if state == .thinking, t - stateEnteredAt > thinkingTimeout {
@@ -326,12 +220,12 @@ final class PetController: ObservableObject {
             if clamped != target { targetX = clamped }
         }
 
-        // Movimiento horizontal (quieta mientras escribís).
+        // Movimiento horizontal.
         var moving = false
-        if !isPrompting, let target = targetX, t >= pauseUntil {
+        if let target = targetX, t >= pauseUntil {
             let delta = target - f.x
             let dist = abs(delta)
-            let step = max(8, config.walkSpeed) * dt
+            let step = PetConstants.walkSpeed * dt
             if dist <= step {
                 f.x = target
                 if !arrived { onArrive(at: t) }
@@ -345,7 +239,7 @@ final class PetController: ObservableObject {
         // Frame de patas: avanza en función de la distancia recorrida, no del tiempo,
         // así la cadencia acompaña a la velocidad de caminata.
         if moving {
-            walkAccumulator += max(8, config.walkSpeed) * dt
+            walkAccumulator += PetConstants.walkSpeed * dt
             let stride = max(4.0, layout.scale * 2.2)
             f.walkFrame = Int(walkAccumulator / stride) % ClawdSprite.walkCycleCount
         } else {
@@ -362,7 +256,7 @@ final class PetController: ObservableObject {
         }
 
         // Idle: elegir un nuevo destino cuando terminó la pausa.
-        if state == .idle, !isPrompting, targetX == nil, t >= pauseUntil {
+        if state == .idle, targetX == nil, t >= pauseUntil {
             pickNewIdleTarget()
         }
 
@@ -442,7 +336,7 @@ final class PetController: ObservableObject {
     }
 
     private func pickNewIdleTarget() {
-        guard state == .idle, !isPrompting else { return }
+        guard state == .idle else { return }
         let bounds = idleBounds
         var candidate = Double.random(in: bounds)
         // Evitar micro-movimientos: forzamos un recorrido mínimo.

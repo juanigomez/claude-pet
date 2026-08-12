@@ -53,25 +53,24 @@ final class PermissionsManager: ObservableObject {
 
     /// Por qué a veces "ya lo di" y sigue apareciendo en rojo.
     static let staleGrantExplanation = """
-    macOS asocia el permiso a la firma del binario, no a su ruta. Cada vez que \
-    recompilás, la firma ad-hoc cambia y el permiso que habías dado deja de aplicar \
-    aunque el switch siga encendido en Ajustes.
+    macOS ties the permission to the binary's signature, not its path. Every time you \
+    rebuild, the ad-hoc signature changes and the permission you granted stops applying \
+    even though the switch is still on in Settings.
 
-    Además `AXIsProcessTrusted()` queda cacheado dentro del proceso: si concediste el \
-    permiso con la app ya abierta, hace falta reiniciarla para que lo vea.
+    Also, `AXIsProcessTrusted()` is cached inside the process: if you granted the \
+    permission while the app was already open, it needs a restart to see it.
 
-    Receta: en Ajustes ▸ Privacidad y seguridad ▸ Accesibilidad, quitá ClawdPet con \
-    «−», volvé a agregarlo con «+», y reiniciá la app acá abajo.
+    Fix: in Settings ▸ Privacy & Security ▸ Accessibility, remove ClawdPet with "−", \
+    add it back with "+", and restart the app below.
     """
 
     /// Texto que se muestra en Preferencias cuando falta el permiso.
     static let explanation = """
-    Claw'd Pet usa Accesibilidad para tres cosas: leer dónde está la ventana de la app \
-    que te reclama algo, medir el ancho real del Dock para no pasarse de largo, y \
-    escribir el texto en Claude Desktop cuando le preguntás algo desde la burbuja.
+    Claw'd Pet uses Accessibility for two things: reading where the window of the app \
+    that needs you is, and measuring the real width of the Dock so it doesn't wander \
+    past it.
 
-    Sin el permiso el resto sigue andando: la mascota rebota donde esté en vez de \
-    moverse hacia la app, camina sobre todo el ancho de la pantalla, y el texto que le \
-    escribas queda copiado en el portapapeles para que lo pegues vos.
+    Everything else still works without the permission: the mascot bounces wherever it \
+    is instead of moving to the app, and it walks across the whole width of the screen.
     """
 }

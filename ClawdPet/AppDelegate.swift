@@ -23,23 +23,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.refreshMenu() }
             .store(in: &cancellables)
 
-        // Atajos para debug, para probar sin buscar el ícono en la barra de menú:
+        // Atajo para debug, para probar sin buscar el ícono en la barra de menú:
         //   CLAWDPET_SHOW_PREFS=1     abre Preferencias al arrancar
-        //   CLAWDPET_OPEN_PROMPT=1    abre el campo de texto
-        //   CLAWDPET_TEST_ASK="…"     manda esa pregunta como si la hubieras escrito
-        let environment = ProcessInfo.processInfo.environment
-        if environment["CLAWDPET_SHOW_PREFS"] == "1" {
+        if ProcessInfo.processInfo.environment["CLAWDPET_SHOW_PREFS"] == "1" {
             DispatchQueue.main.async { [weak self] in self?.showPreferences() }
-        }
-        if environment["CLAWDPET_OPEN_PROMPT"] == "1" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.coordinator.controller.openPrompt()
-            }
-        }
-        if let question = environment["CLAWDPET_TEST_ASK"], !question.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.coordinator.controller.submitPrompt(question)
-            }
         }
     }
 
@@ -52,7 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = MenuBarIcon.image()
-        item.button?.toolTip = "Claw'd Pet — click para prender/apagar, click derecho para el menú"
+        item.button?.toolTip = "Claw'd Pet — click to toggle on/off, right-click for the menu"
         // No asignamos `item.menu`: si lo hacemos, AppKit se queda con TODOS los clicks
         // y no hay forma de distinguir izquierdo de derecho. Manejamos el click nosotros
         // y mostramos el menú a mano sólo cuando corresponde.
@@ -89,20 +76,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ///
     /// Forzar el estado a mano existía sólo para probar, y confunde: la mascota
     /// refleja lo que hace el agente, no algo que vos elegís. Prender y apagar es
-    /// el click izquierdo sobre el ícono; preguntarle algo a Claude es el click
-    /// sobre la mascota.
+    /// el click izquierdo sobre el ícono.
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
         menu.autoenablesItems = false
 
-        let prefs = NSMenuItem(title: "Preferencias…",
+        let prefs = NSMenuItem(title: "Preferences…",
                                action: #selector(showPreferences), keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)
 
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "Salir de Claw'd Pet",
+        let quit = NSMenuItem(title: "Quit Claw'd Pet",
                               action: #selector(quit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
