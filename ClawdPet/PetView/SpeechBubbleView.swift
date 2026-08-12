@@ -136,7 +136,9 @@ struct SpeechBubbleView: View {
                 Text(string)
                     .font(.system(size: max(10, scale * 2.4), weight: .medium, design: .rounded))
                     .foregroundStyle(tint.bubbleText)
-                    .lineLimit(4)
+                    // Sin tope de líneas: la burbuja crece para arriba (ver el anclaje
+                    // por `alignmentGuide` en PetRootView) en vez de cortar la respuesta
+                    // con "…". El ancho fijo de abajo evita que se dispare a lo ancho.
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     // Tope de ancho para que un mensaje largo no se coma la pantalla.

@@ -134,7 +134,12 @@ final class PetWindowController {
         let headGap = max(6, scale * 1.6)
         let estimatedOverhead = spriteSide * 1.8 + 16
         let measuredOverhead = overheadHeight > 0 ? Double(overheadHeight) + headGap + 4 : 0
-        let stripHeight = (floorY + spriteSide + max(estimatedOverhead, measuredOverhead)).rounded(.up)
+        // Ahora que la burbuja de respuesta no trunca el texto (ver SpeechBubbleView),
+        // una respuesta larguísima podría pedir más alto que la pantalla entera. La
+        // franja nunca puede ser más alta que la pantalla, así que la recortamos ahí:
+        // el exceso de texto queda arriba del borde en vez de estirar la ventana.
+        let stripHeight = min(screenFrame.height,
+                              (floorY + spriteSide + max(estimatedOverhead, measuredOverhead)).rounded(.up))
 
         let newFrame = NSRect(x: screenFrame.minX,
                               y: screenFrame.minY,
