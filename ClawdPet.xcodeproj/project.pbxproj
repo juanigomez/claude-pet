@@ -1,0 +1,380 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AB010000000000000000000D /* clawdpet in Embed CLI */ = {isa = PBXBuildFile; fileRef = AB0100000000000000000007 /* clawdpet */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AB010000000000000000000F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AB0100000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AB0100000000000000000005;
+			remoteInfo = ClawdPetCLI;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AB010000000000000000000B /* Embed CLI */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				AB010000000000000000000D /* clawdpet in Embed CLI */,
+			);
+			name = "Embed CLI";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AB0100000000000000000006 /* ClawdPet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawdPet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0100000000000000000007 /* clawdpet */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clawdpet; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB010000000000000000001C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AB0100000000000000000019 /* ClawdPet */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClawdPet;
+			sourceTree = "<group>";
+		};
+		AB010000000000000000001A /* ClawdPetCLI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClawdPetCLI;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AB0100000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB010000000000000000001D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AB0100000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				AB010000000000000000001C /* README.md */,
+				AB0100000000000000000019 /* ClawdPet */,
+				AB010000000000000000001A /* ClawdPetCLI */,
+				AB0100000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AB0100000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AB0100000000000000000006 /* ClawdPet.app */,
+				AB0100000000000000000007 /* clawdpet */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AB0100000000000000000004 /* ClawdPet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB0100000000000000000011 /* Build configuration list for PBXNativeTarget "ClawdPet" */;
+			buildPhases = (
+				AB0100000000000000000008 /* Sources */,
+				AB0100000000000000000009 /* Frameworks */,
+				AB010000000000000000000A /* Resources */,
+				AB010000000000000000000B /* Embed CLI */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AB010000000000000000000E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AB0100000000000000000019 /* ClawdPet */,
+			);
+			name = ClawdPet;
+			packageProductDependencies = (
+			);
+			productName = ClawdPet;
+			productReference = AB0100000000000000000006 /* ClawdPet.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AB0100000000000000000005 /* ClawdPetCLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB0100000000000000000012 /* Build configuration list for PBXNativeTarget "ClawdPetCLI" */;
+			buildPhases = (
+				AB010000000000000000000C /* Sources */,
+				AB010000000000000000001D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AB010000000000000000001A /* ClawdPetCLI */,
+			);
+			name = ClawdPetCLI;
+			packageProductDependencies = (
+			);
+			productName = clawdpet;
+			productReference = AB0100000000000000000007 /* clawdpet */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AB0100000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AB0100000000000000000004 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					AB0100000000000000000005 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = AB0100000000000000000010 /* Build configuration list for PBXProject "ClawdPet" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AB0100000000000000000002;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AB0100000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AB0100000000000000000004 /* ClawdPet */,
+				AB0100000000000000000005 /* ClawdPetCLI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AB010000000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AB0100000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB010000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AB010000000000000000000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AB0100000000000000000005 /* ClawdPetCLI */;
+			targetProxy = AB010000000000000000000F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AB0100000000000000000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AB0100000000000000000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AB0100000000000000000015 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Claw'd Pet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_CFBundleIconFile = AppIcon;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clawdpet.ClawdPet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		AB0100000000000000000016 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Claw'd Pet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_CFBundleIconFile = AppIcon;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clawdpet.ClawdPet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		AB0100000000000000000017 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clawdpet.cli;
+				PRODUCT_NAME = clawdpet;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		AB0100000000000000000018 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clawdpet.cli;
+				PRODUCT_NAME = clawdpet;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AB0100000000000000000010 /* Build configuration list for PBXProject "ClawdPet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0100000000000000000013 /* Debug */,
+				AB0100000000000000000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AB0100000000000000000011 /* Build configuration list for PBXNativeTarget "ClawdPet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0100000000000000000015 /* Debug */,
+				AB0100000000000000000016 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AB0100000000000000000012 /* Build configuration list for PBXNativeTarget "ClawdPetCLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0100000000000000000017 /* Debug */,
+				AB0100000000000000000018 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AB0100000000000000000001 /* Project object */;
+}

@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claw'd Pet — tu agente, caminando sobre el Dock</title>
+<meta name="description" content="Mascota pixel-art para macOS que camina sobre el Dock y te muestra qué está haciendo Claude Code.">
+<meta property="og:title" content="Claw'd Pet">
+<meta property="og:description" content="Tu agente de IA, caminando sobre el Dock.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --body:  #D9714F;
+    --light: #E8906F;
+    --dark:  #B05336;
+    --ink:   #16161A;
+    --muted: #6B6B75;
+    --line:  rgba(0,0,0,.09);
+    --bg:    #FFFFFF;
+    --card:  #F7F5F3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #F2F2F5; --muted: #9B9BA5; --line: rgba(255,255,255,.12);
+      --bg: #0E0E11; --card: #17171C;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
+  .brand img { width: 28px; height: 28px; border-radius: 7px; }
+  header a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  header a:hover { color: var(--ink); }
+
+  /* ── Hero ───────────────────────────────────────────────── */
+  .hero { text-align: center; padding: 26px 0 60px; }
+  h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.08; letter-spacing: -.03em; margin: 34px 0 16px; font-weight: 700;
+  }
+  .lede { color: var(--muted); font-size: clamp(16px, 2.2vw, 19px); max-width: 34em; margin: 0 auto; }
+
+  /* Dock de mentira, con la mascota caminando encima. */
+  .stage { position: relative; height: 132px; user-select: none; }
+  /* La mascota camina exactamente sobre el ancho del Dock: --span es la mitad del
+     recorrido, medido desde el centro. */
+  .pet {
+    position: absolute; bottom: 60px; left: calc(50% - 26px);
+    --span: 132px;
+    animation: walk 13s cubic-bezier(.45,0,.55,1) infinite;
+  }
+  .pet svg { display: block; width: 52px; height: 52px; }
+  @keyframes walk {
+    0%   { transform: translateX(calc(var(--span) * -1)) scaleX(1); }
+    44%  { transform: translateX(var(--span))            scaleX(1); }
+    50%  { transform: translateX(var(--span))            scaleX(-1); }
+    94%  { transform: translateX(calc(var(--span) * -1)) scaleX(-1); }
+    100% { transform: translateX(calc(var(--span) * -1)) scaleX(1); }
+  }
+  .bob { animation: bob .5s steps(2) infinite; }
+  @keyframes bob { 50% { transform: translateY(2px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pet { animation: none; transform: none; }
+    .bob { animation: none; }
+  }
+
+  .dock {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: flex-end; gap: 9px;
+    padding: 9px 12px; border-radius: 20px;
+    background: var(--card); border: 1px solid var(--line);
+  }
+  .dock i { width: 42px; height: 42px; border-radius: 11px; display: block; }
+
+  /* ── Botones ────────────────────────────────────────────── */
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 34px 0 14px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 13px 22px; border-radius: 12px; font-weight: 600; font-size: 15px;
+    text-decoration: none; border: 1px solid transparent; transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { opacity: .88; }
+  .btn-ghost { border-color: var(--line); color: var(--ink); }
+  .btn-ghost:hover { background: var(--card); }
+  .meta { color: var(--muted); font-size: 13.5px; }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--line);
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; margin-right: 8px;
+  }
+
+  /* ── Features ───────────────────────────────────────────── */
+  hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0 52px; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; text-align: center; }
+  @media (max-width: 620px) { .features { grid-template-columns: 1fr; gap: 30px; } }
+  .features h3 { font-size: 15.5px; margin: 14px 0 6px; letter-spacing: -.01em; }
+  .features p { color: var(--muted); font-size: 14.5px; margin: 0; }
+  .glyph { font-size: 26px; line-height: 1; }
+
+  /* ── Cómo funciona ──────────────────────────────────────── */
+  .how { margin: 72px 0 0; }
+  .how h2 { font-size: 22px; letter-spacing: -.02em; margin: 0 0 20px; }
+  .states { display: grid; gap: 12px; }
+  .state {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border: 1px solid var(--line); border-radius: 13px; background: var(--card);
+  }
+  .state svg { flex: none; width: 30px; height: 30px; }
+  .state b { display: block; font-size: 14.5px; }
+  .state span { color: var(--muted); font-size: 14px; }
+
+  pre {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 15px 17px; overflow-x: auto; font-size: 13px; line-height: 1.7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .note { color: var(--muted); font-size: 14px; }
+  footer { color: var(--muted); font-size: 13.5px; text-align: center; padding: 72px 0 44px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="icon.png" alt=""> Claw'd Pet</div>
+    <a href="https://github.com/juanigomez/claude-pet">GitHub</a>
+  </header>
+
+  <section class="hero">
+    <div class="stage">
+      <div class="pet">
+        <!-- El mismo sprite 16×16 que dibuja la app, en SVG. -->
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-label="Claw'd">
+          <g class="bob">
+            <g fill="#E8906F">
+              <rect x="4" y="2" width="8" height="1"/><rect x="3" y="3" width="10" height="1"/>
+            </g>
+            <g fill="#D9714F">
+              <rect x="2" y="4" width="12" height="3"/>
+              <rect x="2" y="7" width="2" height="2"/><rect x="6" y="7" width="4" height="2"/>
+              <rect x="12" y="7" width="2" height="2"/>
+              <rect x="2" y="9" width="12" height="4"/>
+            </g>
+            <g fill="#B05336">
+              <rect x="0" y="7" width="2" height="3"/><rect x="14" y="7" width="2" height="3"/>
+              <rect x="2" y="13" width="12" height="1"/>
+              <rect x="2" y="14" width="2" height="2"/><rect x="5" y="14" width="2" height="2"/>
+              <rect x="9" y="14" width="2" height="2"/><rect x="12" y="14" width="2" height="2"/>
+            </g>
+            <g fill="#1A1A1A">
+              <rect x="4" y="7" width="2" height="2"/><rect x="10" y="7" width="2" height="2"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="dock" aria-hidden="true">
+        <i style="background:linear-gradient(160deg,#5BC0F8,#2E86DE)"></i>
+        <i style="background:linear-gradient(160deg,#FFD37A,#F0A130)"></i>
+        <i style="background:linear-gradient(160deg,#8CE99A,#37B24D)"></i>
+        <i style="background:linear-gradient(160deg,#B197FC,#7048E8)"></i>
+        <i style="background:linear-gradient(160deg,#FF8787,#E03131)"></i>
+        <i style="background:linear-gradient(160deg,#5C5F66,#212529)"></i>
+      </div>
+    </div>
+
+    <h1>Tu agente, caminando sobre el Dock.</h1>
+    <p class="lede">
+      Claw'd vive arriba del Dock y te muestra qué está haciendo Claude Code.
+      Piensa cuando piensa, y cuando necesita tu OK camina hasta la app y te dice
+      exactamente qué te está pidiendo.
+    </p>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="https://github.com/juanigomez/claude-pet/releases/latest/download/ClawdPet.zip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 1v8.6l3-3 1 1-4.7 4.7L2.6 7.6l1-1 3 3V1h1.4zM2 13.6h12V15H2z"/>
+        </svg>
+        Descargar para macOS
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/juanigomez/claude-pet">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.96 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.03 2.2-.82 2.2-.82.44 1.11.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.08-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+    <p class="meta"><span class="tag">BETA</span>v<span id="version">1.0</span> · macOS 14+ · Apple Silicon · Código abierto</p>
+  </section>
+
+  <hr>
+
+  <section class="features">
+    <div>
+      <div class="glyph">🚶</div>
+      <h3>Camina</h3>
+      <p>Se pasea sobre tus íconos del Dock, sin taparte nada ni robarte el foco.</p>
+    </div>
+    <div>
+      <div class="glyph">💭</div>
+      <h3>Piensa</h3>
+      <p>Puntitos mientras el agente trabaja. Sabés que está vivo sin mirar la terminal.</p>
+    </div>
+    <div>
+      <div class="glyph">👋</div>
+      <h3>Te avisa</h3>
+      <p>Camina hasta la app que necesita tu OK y te dice qué te está pidiendo.</p>
+    </div>
+  </section>
+
+  <section class="how">
+    <h2>Los tres estados</h2>
+    <div class="states">
+      <div class="state">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="4" width="12" height="10" fill="#D9714F"/><rect x="0" y="7" width="2" height="3" fill="#B05336"/><rect x="14" y="7" width="2" height="3" fill="#B05336"/><rect x="4" y="7" width="2" height="2" fill="#1A1A1A"/><rect x="10" y="7" width="2" height="2" fill="#1A1A1A"/></svg>
+        <div><b>Idle</b><span>Camina de un lado a otro sobre el Dock.</span></div>
+      </div>
+      <div class="state">
+        <svg viewBox="0 0 16 16"><circle cx="4" cy="8" r="1.6" fill="#6B6B75"/><circle cx="8" cy="8" r="1.6" fill="#6B6B75"/><circle cx="12" cy="8" r="1.6" fill="#6B6B75"/></svg>
+        <div><b>Pensando</b><span>Burbuja con puntitos mientras el agente trabaja.</span></div>
+      </div>
+      <div class="state">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="4" width="12" height="10" fill="#E25D33"/><rect x="0" y="7" width="2" height="3" fill="#B84222"/><rect x="14" y="7" width="2" height="3" fill="#B84222"/><rect x="4" y="7" width="2" height="2" fill="#1A1A1A"/><rect x="10" y="7" width="2" height="2" fill="#1A1A1A"/></svg>
+        <div><b>Necesita tu acción</b><span>Salta sobre el ícono de la app y muestra qué te pide. Click y te lleva ahí.</span></div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:44px">Enchufarla a Claude Code</h2>
+    <p class="note">
+      Abrila, y en <b>Preferencias ▸ Integración ▸ Conectar ahora</b>. Instala el comando
+      y escribe los hooks en tu <code>settings.json</code>, con backup del que tengas.
+      No hay apps que configurar: descubre sola de qué terminal o editor viene cada aviso.
+    </p>
+
+    <h2 style="margin-top:44px">Desde tus propios scripts</h2>
+    <pre><code>clawdpet notify --state needs_action --message "Build falló"
+clawdpet thinking
+clawdpet done "Terminó la tarea"</code></pre>
+
+    <h2 style="margin-top:44px">La primera vez</h2>
+    <p class="note">
+      Está firmada ad-hoc, así que macOS avisa una vez: <b>click derecho ▸ Abrir</b>.
+      Después se abre normal. Los detalles están en
+      <a href="https://github.com/juanigomez/claude-pet/blob/main/docs/INSTALAR.md">la guía de instalación</a>.
+    </p>
+  </section>
+
+  <footer>
+    Hecho con Claude Code · <a href="https://github.com/juanigomez/claude-pet">código en GitHub</a>
+  </footer>
+</div>
+
+</body>
+</html>
